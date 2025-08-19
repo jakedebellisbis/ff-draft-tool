@@ -1,26 +1,38 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
-# ✅ import all your routers
-from app.routers import leagues, players, adp, keepers, imports, availability, admin
+from app.database import engine
+from app import models
 
-app = FastAPI()
+# Create tables if they don't exist
+models.Base.metadata.create_all(bind=engine)
 
-# ✅ Allow the Vite dev server to call the API
+# Force docs + openapi
+app = FastAPI(
+    docs_url="/docs",
+    redoc_url=None,
+    openapi_url="/openapi.json"
+)
+
+# Allow all origins for now (adjust later for security)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ✅ register routers so endpoints exist (e.g., GET /leagues)
-app.include_router(leagues.router)
-app.include_router(players.router)
-app.include_router(adp.router)
-app.include_router(keepers.router)
-app.include_router(imports.router)
-app.include_router(availability.router)
-app.include_router(admin.router)
+# Root redirect → docs
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse("/docs")
+
+
+# Example healthcheck
+@app.get("/health", tags=["System"])
+def healthcheck():
+    return {"status": "ok"}
+
 
