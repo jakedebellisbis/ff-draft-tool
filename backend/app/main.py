@@ -36,13 +36,13 @@ def health():
     return {"ok": True, "service": "backend", "status": "up"}
 
 # Routers
-app.include_router(leagues.router, prefix="/leagues", tags=["leagues"])
-app.include_router(players.router, prefix="/players", tags=["players"])
-app.include_router(adp.router, prefix="/adp", tags=["adp"])
-app.include_router(keepers.router, prefix="/keepers", tags=["keepers"])
-app.include_router(imports.router, prefix="/imports", tags=["imports"])
-app.include_router(availability.router, prefix="/availability", tags=["availability"])
-app.include_router(admin.router, prefix="/admin", tags=["admin"])
+app.include_router(leagues.router)
+app.include_router(players.router)
+app.include_router(adp.router)
+app.include_router(keepers.router)
+app.include_router(imports.router)
+app.include_router(availability.router)
+app.include_router(admin.router)
 
 # Startup tasks: create tables and try to seed once
 @app.on_event("startup")
