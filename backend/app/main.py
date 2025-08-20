@@ -46,6 +46,15 @@ def startup_tasks():
     except Exception as e:
         print(f"⚠️ Seeding skipped or failed: {e}")
 
+# --- Health / root checks for Render ---
+@app.get("/", tags=["health"])
+def root():
+    return {"status": "ok"}
+
+@app.get("/healthz", tags=["health"])
+def healthz():
+    return {"status": "ok"}
+
 
 
 
