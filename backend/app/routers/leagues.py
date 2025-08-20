@@ -4,7 +4,7 @@ from typing import List
 from .. import models, schemas
 from ..database import get_db
 
-router = APIRouter(prefix="/leagues", tags=["leagues"])
+router = APIRouter(tags=["leagues"])
 
 @router.post("/", response_model=schemas.LeagueOut)
 def create_league(payload: schemas.LeagueCreate, db: Session = Depends(get_db)):
@@ -20,7 +20,8 @@ def list_leagues(db: Session = Depends(get_db)):
 
 @router.get("/{league_id}", response_model=schemas.LeagueOut)
 def get_league(league_id: int, db: Session = Depends(get_db)):
-    league = db.query(models.League).get(league_id)
+    league = db.get(models.League, league_id)  # SQLAlchemy 2.x style
     if not league:
-        raise HTTPException(404, "League not found")
+        raise HTTPException(status_code=404, detail="League not found")
     return league
+
