@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # Routers
 from app.routers import leagues, players, adp, keepers, imports, availability, admin
 
-# DB + models (to ensure tables exist)
+# DB + models (ensure tables exist)
 from app.database import engine
 from app.models import Base
 
@@ -13,40 +13,37 @@ from app import seed as seed_module
 
 app = FastAPI()
 
+# CORS for local dev + Vercel frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ],
-    # allow all Vercel subdomains like https://ff-draft-tool-sandy.vercel.app/
     allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(leagues.router, prefix="/leagues", tags=["leagues"])
-app.include_router(players.router, prefix="/players", tags=["players"])
-app.include_router(adp.router, prefix="/adp", tags=["adp"])
-app.include_router(keepers.router, prefix="/keepers", tags=["keepers"])
-app.include_router(imports.router, prefix="/imports", tags=["imports"])
-app.include_router(availability.router, prefix="/availability", tags=["availability"])
-app.include_router(admin.router, prefix="/admin", tags=["admin"])
+# ✅ Do NOT add extra prefixes here — routers already have them
+app.include_router(leagues.router)
+app.include_router(players.router)
+app.include_router(adp.router)
+app.include_router(keepers.router)
+app.include_router(imports.router)
+app.include_router(availability.router)
+app.include_router(admin.router)
 
-
-# Ensure tables exist + try to seed once on startup
 @app.on_event("startup")
 def startup_tasks():
     # Make sure DB tables exist on Render (Neon)
     Base.metadata.create_all(bind=engine)
-
-    # Try to seed (seed.run() should be idempotent or handle duplicates gracefully)
+    # Try to seed once (should be idempotent)
     try:
         seed_module.run()
         print("✅ Seeded data on startup (if empty).")
     except Exception as e:
-        # Not fatal; just log
         print(f"⚠️ Seeding skipped or failed: {e}")
 
 
