@@ -4,41 +4,33 @@ from fastapi.middleware.cors import CORSMiddleware
 # Routers
 from app.routers import leagues, players, adp, keepers, imports, availability, admin
 
-# DB (for creating tables on startup)
+# DB + models (to ensure tables exist)
 from app.database import engine
 from app.models import Base
 
-app = FastAPI(
-    title="FF Draft Tool API",
-    version="1.0.0",
-)
+# Seeding
+from app import seed as seed_module
 
-# CORS — allow local dev and hosted frontends (Render/Vercel).
-# If you later know your exact Vercel URL, add it to allow_origins.
+app = FastAPI()
+
+# CORS (add your Vercel domain later if needed)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # you can tighten this later
+    allow_origins=["*"],   # you can restrict later
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ---- ensure DB tables exist at container startup (Render, etc.) ----
-@app.on_event("startup")
-def create_tables():
-    Base.metadata.create_all(bind=engine)
-# --------------------------------------------------------------------
-
-# Simple health/root endpoints
-@app.get("/", tags=["health"])
+@app.get("/")
 def root():
-    return {"status": "ok", "app": "ff-draft-tool-api"}
+    return {"status": "ok"}
 
-@app.get("/healthz", tags=["health"])
-def healthz():
+@app.get("/health")
+def health():
     return {"ok": True}
 
-# Attach routers (these files already exist in app/routers/)
+# Include routers
 app.include_router(leagues.router)
 app.include_router(players.router)
 app.include_router(adp.router)
@@ -46,5 +38,21 @@ app.include_router(keepers.router)
 app.include_router(imports.router)
 app.include_router(availability.router)
 app.include_router(admin.router)
+
+# Ensure tables exist + try to seed once on startup
+@app.on_event("startup")
+def startup_tasks():
+    # Make sure DB tables exist on Render (Neon)
+    Base.metadata.create_all(bind=engine)
+
+    # Try to seed (seed.run() should be idempotent or handle duplicates gracefully)
+    try:
+        seed_module.run()
+        print("✅ Seeded data on startup (if empty).")
+    except Exception as e:
+        # Not fatal; just log
+        print(f"⚠️ Seeding skipped or failed: {e}")
+
+
 
 
