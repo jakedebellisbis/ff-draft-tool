@@ -16,10 +16,11 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://127.0.0.1:5173",
         "http://localhost:5173",
-        "https://ff-draft-tool-sandy.vercel.app/"
+        "http://127.0.0.1:5173",
     ],
+    # allow all Vercel subdomains like https://ff-draft-tool-sandy.vercel.app/
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,6 +33,7 @@ app.include_router(keepers.router, prefix="/keepers", tags=["keepers"])
 app.include_router(imports.router, prefix="/imports", tags=["imports"])
 app.include_router(availability.router, prefix="/availability", tags=["availability"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
+
 
 # Ensure tables exist + try to seed once on startup
 @app.on_event("startup")
