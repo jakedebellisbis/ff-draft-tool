@@ -13,31 +13,25 @@ from app import seed as seed_module
 
 app = FastAPI()
 
-# CORS (add your Vercel domain later if needed)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # you can restrict later
+    allow_origins=[
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+        "https://ff-draft-tool-sandy.vercel.app/"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.get("/")
-def root():
-    return {"status": "ok"}
-
-@app.get("/health")
-def health():
-    return {"ok": True}
-
-# Include routers
-app.include_router(leagues.router)
-app.include_router(players.router)
-app.include_router(adp.router)
-app.include_router(keepers.router)
-app.include_router(imports.router)
-app.include_router(availability.router)
-app.include_router(admin.router)
+app.include_router(leagues.router, prefix="/leagues", tags=["leagues"])
+app.include_router(players.router, prefix="/players", tags=["players"])
+app.include_router(adp.router, prefix="/adp", tags=["adp"])
+app.include_router(keepers.router, prefix="/keepers", tags=["keepers"])
+app.include_router(imports.router, prefix="/imports", tags=["imports"])
+app.include_router(availability.router, prefix="/availability", tags=["availability"])
+app.include_router(admin.router, prefix="/admin", tags=["admin"])
 
 # Ensure tables exist + try to seed once on startup
 @app.on_event("startup")
