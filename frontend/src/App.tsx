@@ -22,7 +22,7 @@ export default function App() {
 
   // Load leagues on mount
   useEffect(() => {
-    api.get('/leagues').then(res => {
+    api.get('/leagues/').then(res => {
       setLeagues(res.data)
       if (res.data.length) {
         setLeagueId(res.data[0].id)
