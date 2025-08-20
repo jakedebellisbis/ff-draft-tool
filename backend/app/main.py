@@ -4,16 +4,16 @@ from fastapi.middleware.cors import CORSMiddleware
 # Routers
 from app.routers import leagues, players, adp, keepers, imports, availability, admin
 
-# DB + models (ensure tables exist)
+# DB + models (ensure tables exist on startup)
 from app.database import engine
 from app.models import Base
 
-# Seeding
+# Optional seeding
 from app import seed as seed_module
 
 app = FastAPI()
 
-# CORS for local dev + Vercel frontend
+# CORS: local dev + Vercel
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -26,35 +26,30 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ✅ Do NOT add extra prefixes here — routers already have them
-app.include_router(leagues.router)
-app.include_router(players.router)
-app.include_router(adp.router)
-app.include_router(keepers.router)
-app.include_router(imports.router)
-app.include_router(availability.router)
-app.include_router(admin.router)
+# Health & root
+@app.get("/", include_in_schema=False)
+def root():
+    return {"ok": True, "message": "ff-draft-tool backend"}
 
+@app.get("/health", include_in_schema=False)
+def health():
+    return {"ok": True, "service": "backend", "status": "up"}
+
+# Routers
+app.include_router(leagues.router, prefix="/leagues", tags=["leagues"])
+app.include_router(players.router, prefix="/players", tags=["players"])
+app.include_router(adp.router, prefix="/adp", tags=["adp"])
+app.include_router(keepers.router, prefix="/keepers", tags=["keepers"])
+app.include_router(imports.router, prefix="/imports", tags=["imports"])
+app.include_router(availability.router, prefix="/availability", tags=["availability"])
+app.include_router(admin.router, prefix="/admin", tags=["admin"])
+
+# Startup tasks: create tables and try to seed once
 @app.on_event("startup")
 def startup_tasks():
-    # Make sure DB tables exist on Render (Neon)
     Base.metadata.create_all(bind=engine)
-    # Try to seed once (should be idempotent)
     try:
         seed_module.run()
         print("✅ Seeded data on startup (if empty).")
     except Exception as e:
         print(f"⚠️ Seeding skipped or failed: {e}")
-
-# --- Health / root checks for Render ---
-@app.get("/", tags=["health"])
-def root():
-    return {"status": "ok"}
-
-@app.get("/healthz", tags=["health"])
-def healthz():
-    return {"status": "ok"}
-
-
-
-
